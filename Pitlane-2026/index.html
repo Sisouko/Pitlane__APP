@@ -9,6 +9,631 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PITLANE — Coming Soon</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        base:      '#000814',
+        primary:   '#001d3d',
+        secondary: '#003566',
+        accent:    '#ffc300',
+        highlight: '#ffd60a',
+      },
+      fontFamily: {
+        display: ['Barlow Condensed', 'sans-serif'],
+        body:    ['Barlow', 'sans-serif'],
+        mono:    ['Share Tech Mono', 'monospace'],
+      },
+    }
+  }
+}
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: #000814; overflow-x: hidden; }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* Speed lines bg */
+  .speed-lines {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .speed-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,195,0,0.06), transparent);
+    animation: speedLine 3s linear infinite;
+    opacity: 0;
+  }
+
+  @keyframes speedLine {
+    0%   { opacity: 0; transform: translateX(-100vw); }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { opacity: 0; transform: translateX(100vw); }
+  }
+
+  /* Circuit track SVG lines */
+  .circuit-bg {
+    position: fixed;
+    bottom: -10%;
+    right: -5%;
+    width: 600px;
+    height: 600px;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glowing orb */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-gold {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,195,0,0.12) 0%, transparent 70%);
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    animation: orbPulse 6s ease-in-out infinite;
+  }
+  .orb-blue {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,53,102,0.5) 0%, transparent 70%);
+    bottom: -50px; right: -100px;
+    animation: orbPulse 8s ease-in-out infinite reverse;
+  }
+  @keyframes orbPulse {
+    0%,100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
+    50%     { opacity: 1;   transform: translateX(-50%) scale(1.15); }
+  }
+  .orb-blue { animation: orbPulseR 8s ease-in-out infinite reverse; }
+  @keyframes orbPulseR {
+    0%,100% { opacity: 0.6; }
+    50%     { opacity: 1; }
+  }
+
+  /* Scan line effect */
+  .scanline {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Flag pattern */
+  .flag-stripe {
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
+  }
+  .flag-cell {
+    width: 10px;
+    height: 10px;
+  }
+  .flag-cell:nth-child(odd) { background: #fff; }
+  .flag-cell:nth-child(even) { background: #000814; border: 1px solid rgba(255,255,255,0.2); }
+
+  /* Countdown flip effect */
+  .flip-card {
+    position: relative;
+    perspective: 400px;
+  }
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .flipping .flip-card-inner {
+    transform: rotateX(-90deg);
+    transition: none;
+  }
+  .flipped .flip-card-inner {
+    transform: rotateX(0deg);
+  }
+
+  /* Number shine */
+  .num-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .num-shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -75%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(105deg, transparent, rgba(255,215,10,0.12), transparent);
+    transform: skewX(-20deg);
+    animation: shine 4s ease-in-out infinite;
+  }
+  @keyframes shine {
+    0%   { left: -75%; }
+    60%  { left: 130%; }
+    100% { left: 130%; }
+  }
+
+  /* Entrance animations */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(40px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity:0; }
+    to   { opacity:1; }
+  }
+  @keyframes slideLeft {
+    from { opacity:0; transform:translateX(-40px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes slideRight {
+    from { opacity:0; transform:translateX(40px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes scaleIn {
+    from { opacity:0; transform:scale(0.85); }
+    to   { opacity:1; transform:scale(1); }
+  }
+  @keyframes borderGlow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(255,195,0,0); }
+    50%      { box-shadow: 0 0 30px 4px rgba(255,195,0,0.18); }
+  }
+
+  .anim-fade-up    { animation: fadeUp    0.8s cubic-bezier(0.22,1,0.36,1) both; }
+  .anim-fade-in    { animation: fadeIn    0.8s ease both; }
+  .anim-slide-left { animation: slideLeft 0.8s cubic-bezier(0.22,1,0.36,1) both; }
+  .anim-scale-in   { animation: scaleIn  0.9s cubic-bezier(0.22,1,0.36,1) both; }
+  .d-0  { animation-delay: 0s; }
+  .d-1  { animation-delay: 0.15s; }
+  .d-2  { animation-delay: 0.3s; }
+  .d-3  { animation-delay: 0.45s; }
+  .d-4  { animation-delay: 0.6s; }
+  .d-5  { animation-delay: 0.75s; }
+  .d-6  { animation-delay: 0.9s; }
+  .d-7  { animation-delay: 1.05s; }
+
+  /* Ticker tape */
+  .ticker-wrap {
+    overflow: hidden;
+    white-space: nowrap;
+    border-top:    1px solid rgba(255,195,0,0.15);
+    border-bottom: 1px solid rgba(255,195,0,0.15);
+  }
+  .ticker-content {
+    display: inline-block;
+    animation: ticker 20s linear infinite;
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* Gold divider */
+  .gold-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ffc300, transparent);
+  }
+
+  /* Progress bar */
+  .build-progress {
+    height: 3px;
+    background: #001d3d;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .build-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffc300, #ffd60a);
+    border-radius: 99px;
+    width: 0%;
+    animation: progressFill 2s 1.5s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  @keyframes progressFill {
+    to { width: 5%; }
+  }
+
+  /* Pulsing dot */
+  .pulse-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #ffc300;
+    animation: pulseDot 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulseDot {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,195,0,0.6); }
+    50%      { opacity: 0.7; box-shadow: 0 0 0 6px rgba(255,195,0,0); }
+  }
+
+  /* Checkered corner */
+  .checkered-corner {
+    position: absolute;
+    display: grid;
+    grid-template-columns: repeat(4, 12px);
+    grid-template-rows: repeat(4, 12px);
+    opacity: 0.25;
+  }
+  .cc { width:12px; height:12px; }
+  .cc-w { background: #fff; }
+  .cc-b { background: #000; border: 1px solid rgba(255,255,255,0.1); }
+
+  /* Feature card glow on hover */
+  .feature-card {
+    transition: border-color 0.3s, transform 0.3s;
+    animation: borderGlow 4s ease-in-out infinite;
+  }
+  .feature-card:hover {
+    border-color: rgba(255,195,0,0.4) !important;
+    transform: translateY(-4px);
+  }
+
+  /* Notification form */
+  .notify-input:focus {
+    outline: none;
+    border-color: #ffc300;
+    box-shadow: 0 0 0 3px rgba(255,195,0,0.12);
+  }
+
+  /* Big counter digit */
+  .big-digit {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(64px, 12vw, 140px);
+    line-height: 1;
+    color: #ffc300;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 60px rgba(255,195,0,0.3);
+  }
+
+  /* Responsive hide */
+  @media (max-width: 768px) {
+    .circuit-bg { width: 300px; height: 300px; right: -10%; }
+    .orb-gold { width: 280px; height: 280px; }
+  }
+</style>
+</head>
+<body class="font-body text-white relative min-h-screen">
+
+<!-- Atmospheric layers -->
+<div class="speed-lines" id="speedLines"></div>
+<div class="orb orb-gold"></div>
+<div class="orb orb-blue"></div>
+<div class="scanline"></div>
+
+<!-- Circuit track background decoration -->
+<svg class="circuit-bg" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M50 350 L50 100 Q50 50 100 50 L300 50 Q380 50 380 130 L380 200 Q380 280 300 280 L180 280 Q120 280 120 220 L120 180 Q120 140 160 140 L250 140" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="50" cy="350" r="10" fill="white"/>
+  <circle cx="250" cy="140" r="8" fill="white"/>
+</svg>
+
+<!-- Checkered corners -->
+<div class="checkered-corner top-0 left-0">
+  <div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div>
+  <div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div>
+  <div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div>
+  <div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div>
+</div>
+<div class="checkered-corner bottom-0 right-0">
+  <div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div>
+  <div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div>
+  <div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div>
+  <div class="cc cc-w"></div><div class="cc cc-b"></div><div class="cc cc-w"></div><div class="cc cc-b"></div>
+</div>
+
+<!-- ─── NAVBAR ─────────────────────────────── -->
+<nav class="relative z-10 flex items-center justify-between px-8 md:px-16 py-6 anim-fade-in d-0">
+  <div class="flex items-center gap-3">
+    <div class="flex gap-[2px] items-center">
+      <div class="w-2.5 h-2.5 bg-white"></div>
+      <div class="w-2.5 h-2.5 bg-accent"></div>
+      <div class="w-2.5 h-2.5 bg-white"></div>
+    </div>
+    <span class="font-display font-black text-2xl tracking-widest text-accent">PITLANE</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <div class="pulse-dot"></div>
+    <span class="font-mono text-xs text-accent tracking-widest">BUILDING IN PROGRESS</span>
+  </div>
+</nav>
+
+<!-- Season progress bar -->
+<div class="relative z-10 px-8 md:px-16 anim-fade-in d-0">
+  <div class="build-progress">
+    <div class="build-progress-fill"></div>
+  </div>
+</div>
+
+<!-- ─── TICKER TAPE ────────────────────────── -->
+<div class="ticker-wrap relative z-10 py-2 mt-4 bg-primary/30 anim-fade-in d-1">
+  <div class="ticker-content">
+    <span class="font-mono text-xs text-accent/70 tracking-widest px-4">
+      F1 2026 SEASON &nbsp;·&nbsp; 24 GRANDS PRIX &nbsp;·&nbsp; 22 DRIVERS &nbsp;·&nbsp; 11 TEAMS &nbsp;·&nbsp; NEW ERA &nbsp;·&nbsp;
+      PITLANE APP COMING SOON &nbsp;·&nbsp; STAY TUNED &nbsp;·&nbsp; F1 2026 SEASON &nbsp;·&nbsp; 24 GRANDS PRIX &nbsp;·&nbsp; 22 DRIVERS &nbsp;·&nbsp; 11 TEAMS &nbsp;·&nbsp; NEW ERA &nbsp;·&nbsp;
+      PITLANE APP COMING SOON &nbsp;·&nbsp; STAY TUNED &nbsp;·&nbsp;
+    </span>
+  </div>
+</div>
+
+<!-- ─── MAIN HERO ───────────────────────────── -->
+<main class="relative z-10 px-8 md:px-16 pt-16 pb-12">
+
+  <!-- Round badge -->
+  <div class="anim-fade-up d-1 mb-6">
+    <span class="inline-flex items-center gap-2 bg-accent/10 border border-accent/30 text-accent font-mono text-xs tracking-widest px-4 py-2 rounded-full uppercase">
+      <span class="pulse-dot" style="width:6px;height:6px;"></span>
+      Formula 1 · 2026 World Championship
+    </span>
+  </div>
+
+  <!-- Main headline -->
+  <div class="max-w-5xl">
+    <h1 class="font-display font-black uppercase leading-none anim-fade-up d-2"
+        style="font-size: clamp(52px, 10vw, 130px); letter-spacing: -0.02em;">
+      <span class="block text-white">STAY</span>
+      <span class="block" style="color: #ffc300; text-shadow: 0 0 80px rgba(255,195,0,0.25);">TUNED.</span>
+    </h1>
+
+    <div class="gold-divider my-6 anim-fade-in d-3" style="max-width: 400px;"></div>
+
+    <p class="font-display font-semibold uppercase tracking-widest text-white/40 anim-fade-up d-3"
+       style="font-size: clamp(14px, 2.5vw, 22px); letter-spacing: 0.2em;">
+      Something remarkable is being built
+    </p>
+    <p class="font-display font-black uppercase text-white anim-fade-up d-4"
+       style="font-size: clamp(22px, 4vw, 52px); letter-spacing: 0.05em;">
+      A GREAT&nbsp;
+      <span style="
+        -webkit-text-stroke: 2px #ffc300;
+        color: transparent;
+        text-shadow: none;
+      ">PITLANE&nbsp;</span>
+      <span style="color:#ffc300;">APP</span>
+    </p>
+  </div>
+
+  <!-- Description -->
+  <p class="mt-8 max-w-2xl font-body font-light text-white/50 leading-relaxed anim-fade-up d-5"
+     style="font-size: clamp(15px, 1.8vw, 18px);">
+    Your ultimate companion for the 2026 Formula 1 season — 24 Grands Prix, 22 drivers, 11 teams,
+    a brand-new era of hybrid power. Track every race, save your favourites, follow your season.
+    <span class="text-accent font-medium">All in one place.</span>
+  </p>
+
+  <!-- ─── COUNTDOWN ──────────────────────────── -->
+  <div class="mt-16 anim-scale-in d-5">
+    <p class="font-mono text-xs text-white/30 tracking-widest uppercase mb-6">
+      App launches in
+    </p>
+
+    <div class="flex items-start gap-4 md:gap-8 flex-wrap">
+
+      <!-- DAYS -->
+      <div class="text-center">
+        <div class="num-shine relative bg-primary border border-secondary rounded-lg px-6 py-5 md:px-10 md:py-8" style="min-width:110px; min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <!-- center fold line -->
+          <div class="absolute left-0 right-0" style="top:50%; height:1px; background:rgba(255,255,255,0.06);"></div>
+          <span class="big-digit" id="days">03</span>
+        </div>
+        <p class="font-mono text-xs text-white/40 tracking-[0.2em] uppercase mt-3">Days</p>
+      </div>
+
+      <!-- colon -->
+      <div class="font-display font-black text-accent/40 self-center mt-[-16px]" style="font-size: clamp(40px, 6vw, 80px);">:</div>
+
+      <!-- HOURS -->
+      <div class="text-center">
+        <div class="num-shine relative bg-primary border border-secondary rounded-lg px-6 py-5 md:px-10 md:py-8" style="min-width:110px; min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div class="absolute left-0 right-0" style="top:50%; height:1px; background:rgba(255,255,255,0.06);"></div>
+          <span class="big-digit" id="hours">00</span>
+        </div>
+        <p class="font-mono text-xs text-white/40 tracking-[0.2em] uppercase mt-3">Hours</p>
+      </div>
+
+      <!-- colon -->
+      <div class="font-display font-black text-accent/40 self-center mt-[-16px]" style="font-size: clamp(40px, 6vw, 80px);">:</div>
+
+      <!-- MINUTES -->
+      <div class="text-center">
+        <div class="num-shine relative bg-primary border border-secondary rounded-lg px-6 py-5 md:px-10 md:py-8" style="min-width:110px; min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div class="absolute left-0 right-0" style="top:50%; height:1px; background:rgba(255,255,255,0.06);"></div>
+          <span class="big-digit" id="minutes">00</span>
+        </div>
+        <p class="font-mono text-xs text-white/40 tracking-[0.2em] uppercase mt-3">Minutes</p>
+      </div>
+
+      <!-- colon -->
+      <div class="font-display font-black text-accent/40 self-center mt-[-16px]" style="font-size: clamp(40px, 6vw, 80px);">:</div>
+
+      <!-- SECONDS -->
+      <div class="text-center">
+        <div class="num-shine relative bg-primary border border-secondary rounded-lg px-6 py-5 md:px-10 md:py-8" style="min-width:110px; min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <div class="absolute left-0 right-0" style="top:50%; height:1px; background:rgba(255,255,255,0.06);"></div>
+          <span class="big-digit" id="seconds">00</span>
+        </div>
+        <p class="font-mono text-xs text-white/40 tracking-[0.2em] uppercase mt-3">Seconds</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── FEATURE CARDS ─────────────────────── -->
+  <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl anim-fade-up d-6">
+
+    <div class="feature-card bg-primary/60 border border-secondary/40 rounded-xl p-6">
+      <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="4" width="16" height="12" rx="2" stroke="#ffc300" stroke-width="1.5"/>
+          <path d="M6 8h8M6 11h5" stroke="#ffc300" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3 class="font-display font-bold text-white text-lg uppercase tracking-wide mb-2">24 Grands Prix</h3>
+      <p class="font-body text-white/40 text-sm leading-relaxed">Every race on every continent. Filter, explore, and never miss a flag drop.</p>
+    </div>
+
+    <div class="feature-card bg-primary/60 border border-secondary/40 rounded-xl p-6">
+      <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2l1.8 5.4H18l-4.9 3.6 1.9 5.4L10 13.1 5 16.4l1.9-5.4L2 7.4h6.2L10 2z" stroke="#ffc300" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3 class="font-display font-bold text-white text-lg uppercase tracking-wide mb-2">Your Garage</h3>
+      <p class="font-body text-white/40 text-sm leading-relaxed">Save favourite races. Build your personal collection. Your season, your way.</p>
+    </div>
+
+    <div class="feature-card bg-primary/60 border border-secondary/40 rounded-xl p-6">
+      <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="7" stroke="#ffc300" stroke-width="1.5"/>
+          <path d="M10 6v4l3 3" stroke="#ffc300" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3 class="font-display font-bold text-white text-lg uppercase tracking-wide mb-2">Live Countdown</h3>
+      <p class="font-body text-white/40 text-sm leading-relaxed">Real-time countdown to every lights-out. Know exactly when the race begins.</p>
+    </div>
+
+  </div>
+
+  <!-- ─── NOTIFY FORM ───────────────────────── -->
+  <div class="mt-16 max-w-xl anim-fade-up d-7">
+    <p class="font-mono text-xs text-accent/60 tracking-widest uppercase mb-4">Get notified on launch</p>
+    <div class="flex gap-3 flex-wrap">
+      <input
+        type="email"
+        placeholder="your@email.com"
+        class="notify-input flex-1 bg-primary border border-secondary text-white font-body text-sm px-5 py-3.5 rounded-lg transition-all"
+        style="min-width: 220px; color: white;"
+      />
+      <button class="bg-accent text-base font-display font-black uppercase tracking-widest px-8 py-3.5 rounded-lg transition-all hover:bg-highlight active:scale-95"
+              style="color: #000814; letter-spacing: 0.12em; font-size:15px;">
+        Notify Me
+      </button>
+    </div>
+    <p class="font-body text-white/25 text-xs mt-3">No spam. Just one email when Pitlane goes live.</p>
+  </div>
+
+</main>
+
+<!-- ─── BOTTOM STRIP ──────────────────────── -->
+<footer class="relative z-10 mt-20 border-t border-secondary/30">
+  <div class="gold-divider"></div>
+  <div class="px-8 md:px-16 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="flag-stripe">
+        <div class="flag-cell"></div><div class="flag-cell"></div>
+        <div class="flag-cell"></div><div class="flag-cell"></div>
+        <div class="flag-cell"></div><div class="flag-cell"></div>
+      </div>
+      <span class="font-mono text-xs text-white/30 tracking-widest">PITLANE · F1 2026</span>
+    </div>
+    <div class="flex items-center gap-6">
+      <span class="font-mono text-xs text-white/20 tracking-widest">BUILT BY A FAN · FOR FANS</span>
+      <div class="flex gap-[2px]">
+        <div class="w-2 h-2 bg-accent/60"></div>
+        <div class="w-2 h-2 bg-white/20"></div>
+        <div class="w-2 h-2 bg-accent/60"></div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── Speed lines generator ── */
+const container = document.getElementById('speedLines');
+const lineCount  = 18;
+for (let i = 0; i < lineCount; i++) {
+  const line = document.createElement('div');
+  line.className = 'speed-line';
+  const topPct   = Math.random() * 100;
+  const width    = 40 + Math.random() * 60;
+  const delay    = Math.random() * 4;
+  const duration = 2 + Math.random() * 3;
+  line.style.cssText = `
+    top: ${topPct}%;
+    width: ${width}vw;
+    animation-delay: ${delay}s;
+    animation-duration: ${duration}s;
+  `;
+  container.appendChild(line);
+}
+
+/* ── Countdown: 3 days from now ── */
+const target = new Date();
+target.setDate(target.getDate() + 3);
+target.setHours(target.getHours(), target.getMinutes(), target.getSeconds(), 0);
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function animDigit(el, newVal) {
+  const old = el.textContent;
+  if (old === newVal) return;
+  el.style.transition = 'none';
+  el.style.transform  = 'translateY(-16px)';
+  el.style.opacity    = '0';
+  el.textContent = newVal;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform 0.25s cubic-bezier(0.22,1,0.36,1), opacity 0.25s ease';
+      el.style.transform  = 'translateY(0)';
+      el.style.opacity    = '1';
+    });
+  });
+}
+
+function tick() {
+  const now  = new Date();
+  const diff = Math.max(0, target - now);
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000)  / 60000);
+  const s = Math.floor((diff % 60000)    / 1000);
+
+  animDigit(document.getElementById('days'),    pad(d));
+  animDigit(document.getElementById('hours'),   pad(h));
+  animDigit(document.getElementById('minutes'), pad(m));
+  animDigit(document.getElementById('seconds'), pad(s));
+}
+
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
   </body>
 </html>
